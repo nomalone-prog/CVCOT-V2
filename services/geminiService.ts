@@ -6,13 +6,14 @@ import { GEMINI_MODEL, SYSTEM_INSTRUCTION, AUDIT_REPORT_SCHEMA } from '../consta
 // Utility to create a new GoogleGenAI instance for each API call
 // This ensures that the instance picks up the latest API key if it changes via window.aistudio.openSelectKey()
 const getGeminiClient = () => {
-  // Ensure process.env.API_KEY is available in the environment
-  if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable is not set. Please ensure it's configured.");
-  }
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
-};
+  // Use import.meta.env for Vite
+  const apiKey = import.meta.env.VITE_API_KEY; 
 
+  if (!apiKey) {
+    throw new Error("API Key not found");
+  }
+  return new GoogleGenAI({ apiKey: apiKey });
+};
 export async function auditListing(listingData: ParsedListingData): Promise<AuditReport> {
   const ai = getGeminiClient();
 
