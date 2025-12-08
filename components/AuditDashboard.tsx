@@ -34,17 +34,16 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
       const csvContent = generateCsvContent(parsedData, auditReport);
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        const sanitizedTitle = parsedData.title.replace(/[^a-zA-Z0-9_\-.]/g, '_').substring(0, 50) || 'report';
-        link.setAttribute('href', url);
-        link.setAttribute('download', `cvc_listing_audit_${sanitizedTitle}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }
+      const url = URL.createObjectURL(blob);
+      const sanitizedTitle = parsedData.title.replace(/[^a-zA-Z0-9_\-.]/g, '_').substring(0, 50) || 'report';
+        
+      link.setAttribute('href', url);
+      link.setAttribute('download', `cvc_listing_audit_${sanitizedTitle}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Failed to generate or download CSV:", error);
       alert("Failed to download CSV. Please try again.");
@@ -55,9 +54,26 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
     return { __html: htmlString };
   };
 
-  const isExcellentScore = auditReport.overallScore > 80;
-  const scoreColorClass = isExcellentScore ? 'text-green-status' : 'text-accent';
-  const scoreText = isExcellentScore ? 'Excellent!' : '';
+  // --- NEW GRADING LOGIC (Replaces Raw Number) ---
+  let scoreLabel = '';
+  let scoreColorClass = '';
+  let ringColor = '';
+
+  const score = auditReport.overallScore;
+
+  if (score > 75) {
+      scoreLabel = 'Excellent';
+      scoreColorClass = 'text-green-status'; // Bright Green text
+      ringColor = '#10B981'; // Tailwind Emerald-500
+  } else if (score > 50) {
+      scoreLabel = 'Good';
+      scoreColorClass = 'text-yellow-400'; // Yellow/Orange text
+      ringColor = '#FBBF24'; // Tailwind Amber-400
+  } else {
+      scoreLabel = 'Needs Work';
+      scoreColorClass = 'text-red-status'; // Red text
+      ringColor = '#EF4444'; // Tailwind Red-500
+  }
 
   const { subject: emailSubject, body: emailBody } = generateEmailContent(parsedData, auditReport);
   const fullEmailContent = `Subject: ${emailSubject}\n\n${emailBody}`;
@@ -65,7 +81,7 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 md:p-8 rounded-xl bg-secondary-bg shadow-2xl">
       
-      {/* NEW: General Info Header Box */}
+      {/* General Info Header Box */}
       <div className="lg:col-span-3 p-4 bg-gray-800 rounded-xl border border-gray-700 flex flex-wrap justify-between items-center">
          <div>
             <h3 className="text-gray-400 text-sm uppercase tracking-wider font-bold">Category</h3>
@@ -83,23 +99,21 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
 
       {/* Container for Overall Score and Download CSV */}
       <div className="lg:col-span-1 flex flex-col gap-6">
-        {/* Overall Score */}
+        {/* Overall Score / Health Grade */}
         <div className="p-4 bg-primary-bg rounded-xl shadow-inner flex flex-col items-center justify-center">
-          <h2 className="text-2xl font-bold text-text-light mb-2">Overall Score</h2>
-          <div className="relative flex items-center justify-center w-32 h-32">
+          <h2 className="text-2xl font-bold text-text-light mb-4">Listing Health</h2>
+          <div className="relative flex items-center justify-center w-40 h-40">
             <CircularProgressRing
-              percentage={auditReport.overallScore}
-              radius={50}
+              percentage={score}
+              radius={60}
               strokeWidth={8}
-              color={isExcellentScore ? 'var(--accent-dark)' : 'var(--accent)'}
+              color={ringColor} // Dynamic Color
             />
-            <span className={`absolute text-4xl font-extrabold ${scoreColorClass}`}>
-              {Math.round(auditReport.overallScore)}
+            {/* Replaced Number with Text Label */}
+            <span className={`absolute text-xl font-extrabold text-center px-2 leading-tight ${scoreColorClass}`}>
+              {scoreLabel}
             </span>
           </div>
-          <p className={`mt-2 text-lg font-semibold ${scoreColorClass}`}>
-            {scoreText}
-          </p>
         </div>
 
         {/* Download Audit as CSV Button */}
@@ -120,7 +134,7 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
         <h2 className="text-3xl font-bold text-text-light mb-4">Title Strategy</h2>
         <div className="space-y-4">
           <div>
-            <p className="text-text-dark text-sm mb-1">Current Title ({auditReport.titleStrategy.score}% Score):</p>
+            <p className="text-text-dark text-sm mb-1">Current Title:</p>
             <p className="text-red-status font-bold text-lg p-2 bg-gray-800 rounded">{parsedData.title}</p>
           </div>
           <div>
@@ -130,23 +144,18 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
                 onClick={() => handleCopyToClipboard(auditReport.titleStrategy.recommendedTitle, 'title')}
                 className="ml-2 px-3 py-1 bg-accent text-white text-sm rounded hover:bg-accent-dark transition-colors flex items-center"
               >
-                {copyStatusTitle === 'copied' ? (
-                  <>Copied!</>
-                ) : (
-                  <>Copy</>
-                )}
+                {copyStatusTitle === 'copied' ? <>Copied!</> : <>Copy</>}
               </button>
             </p>
             <p className="text-green-status font-bold text-xl p-2 bg-gray-800 rounded">{auditReport.titleStrategy.recommendedTitle}</p>
             
-            {/* NEW: Dynamic Reasoning Display */}
+            {/* Dynamic Reasoning Display */}
             <div className="mt-4 p-3 bg-gray-800/50 border-l-4 border-accent rounded-r">
               <p className="text-text-light text-sm italic">
                 <span className="font-bold text-accent not-italic">AI Reasoning: </span>
                 {auditReport.titleStrategy.reasoning}
               </p>
             </div>
-
           </div>
         </div>
       </div>
@@ -211,7 +220,7 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
       <div className="lg:col-span-1 p-6 bg-primary-bg rounded-xl shadow-inner">
         <h2 className="text-3xl font-bold text-text-light mb-4">Item Specifics</h2>
         
-        {/* NEW: Reasoning for Item Specifics */}
+        {/* Reasoning for Item Specifics */}
         <div className="mb-4 p-3 bg-gray-800/50 border-l-4 border-accent rounded-r">
              <p className="text-text-light text-sm italic">
                {auditReport.itemSpecificsRecommendations.reasoning}
@@ -268,7 +277,7 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
       <div className="lg:col-span-3 p-6 bg-primary-bg rounded-xl shadow-inner">
         <h2 className="text-3xl font-bold text-text-light mb-4">Description Rewrite</h2>
         
-         {/* NEW: Reasoning for Description */}
+         {/* Reasoning for Description */}
         <div className="mb-4 p-3 bg-gray-800/50 border-l-4 border-accent rounded-r">
              <p className="text-text-light text-sm italic">
                <span className="font-bold text-accent not-italic">Strategy: </span>
@@ -283,7 +292,7 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
 
       {/* Logistics */}
       <div className="lg:col-span-3 p-6 bg-primary-bg rounded-xl shadow-inner flex flex-col">
-        <h2 className="text-3xl font-bold text-text-light mb-4">Logistics ({auditReport.logistics.score}% Score)</h2>
+        <h2 className="text-3xl font-bold text-text-light mb-4">Logistics</h2>
         <div className="flex-grow space-y-4">
           <div>
             <p className="text-text-dark text-sm mb-1">Postage Policy:</p>
