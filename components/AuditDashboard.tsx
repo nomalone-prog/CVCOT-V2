@@ -105,7 +105,7 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
           <div className="relative flex items-center justify-center w-40 h-40">
             <CircularProgressRing
               percentage={score}
-              radius={60}
+              radius={70}
               strokeWidth={8}
               color={ringColor} // Dynamic Color
             />
