@@ -1,53 +1,52 @@
-
-
 import { ParsedListingData, AuditReport } from '../types';
 
 /**
- * Extracts clean, flowing text from an HTML string, attempting to flatten lists and
- * preserve paragraph breaks, while stripping unwanted characters.
+ * Extracts clean, readable text from an HTML string.
+ * Specifically designed to turn HTML lists (<ul><li>) into plain text bullet points
+ * and preserve paragraph breaks so the email doesn't look like a "wall of text".
  */
 function extractTextContent(htmlString: string): string {
   if (!htmlString) return '';
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlString, 'text/html');
-  const paragraphs: string[] = [];
 
-  // Iterate over common block elements and list items to get content
-  doc.querySelectorAll('h1, h2, h3, h4, h5, h6, p, li').forEach(el => {
-    let text = el.textContent?.trim();
-    if (text) {
-      // Replace common unwanted characters
-      text = text.replace(/—/g, '-'); // Replace em-dash with hyphen
+  let text = htmlString;
 
-      if (el.tagName === 'LI') {
-        // For list items, just add the text. We'll add a hyphen for list appearance in plain text.
-        paragraphs.push(`- ${text}`);
-      } else {
-        paragraphs.push(text);
-      }
-    }
-  });
+  // 1. Replace <br> tags with a single newline
+  text = text.replace(/<br\s*\/?>/gi, '\n');
 
-  // Join paragraphs with double newlines for separation
-  let finalContent = paragraphs.join('\n\n').trim();
+  // 2. Replace list items <li> with a newline and a dash
+  text = text.replace(/<li[^>]*>/gi, '\n- ');
 
-  // Consolidate multiple newlines and spaces
-  finalContent = finalContent.replace(/\n\n+/g, '\n\n');
-  finalContent = finalContent.replace(/\s\s+/g, ' ');
+  // 3. Replace closing block tags (</p>, </div>, </h1>, </ul>) with double newlines
+  //    This ensures separate paragraphs stay separate.
+  text = text.replace(/<\/(p|div|h[1-6]|ul|ol)>/gi, '\n\n');
 
-  return finalContent;
+  // 4. Strip all remaining HTML tags (like <b>, <span>, etc.)
+  text = text.replace(/<[^>]+>/g, '');
+
+  // 5. Decode common HTML entities to ensure text looks normal
+  text = text.replace(/&nbsp;/g, ' ');
+  text = text.replace(/&amp;/g, '&');
+  text = text.replace(/&lt;/g, '<');
+  text = text.replace(/&gt;/g, '>');
+  text = text.replace(/&quot;/g, '"');
+  text = text.replace(/&apos;/g, "'");
+
+  // 6. Clean up excessive whitespace
+  //    Collapses 3+ newlines into just 2, and trims the ends.
+  text = text.replace(/\n\s*\n/g, '\n\n');
+  
+  return text.trim();
 }
 
 /**
  * Generates the email content for the seller based on audit data.
- * Adheres to strict formatting rules (paragraph style, no emojis, em-dashes, or bullet points).
  */
 export function generateEmailContent(parsedData: ParsedListingData, auditReport: AuditReport): { subject: string; body: string } {
   const fullTitle = parsedData.title;
   let itemNameForEmail = fullTitle; // Default to full title
 
   // Attempt to get a cleaner product name by splitting, if a clear separator exists
-  const titleParts = fullTitle.split(/ - | \/ | \| /); // More robust delimiters
+  const titleParts = fullTitle.split(/ - | \/ | \| /);
   if (titleParts.length > 0) {
     itemNameForEmail = titleParts[0]?.trim() || fullTitle;
   }
@@ -67,7 +66,7 @@ export function generateEmailContent(parsedData: ParsedListingData, auditReport:
 
   // 2. Description Update
   body += `2. Description Update:\n\n`;
-  // The description rewrite can contain HTML, extract plain text but preserve list-like structure for email readability
+  // Now uses the improved extractor to keep bullet points formatted
   const rewrittenDescriptionText = extractTextContent(auditReport.descriptionRewrite);
   body += `${rewrittenDescriptionText}\n\n`;
   body += `This description focuses on benefits and advantages of the product, not just details. And the bullet points will really make it easy for buyers to quickly know exactly what those benefits are.\n\n`;
@@ -83,9 +82,6 @@ export function generateEmailContent(parsedData: ParsedListingData, auditReport:
   } else {
     body += `No specific additions to item specifics are recommended at this time, indicating a strong foundation in this area.\n\n`;
   }
-  // Per instructions, do not include corrections unless specific critical error logic is implemented in auditReport
-  // body += `For existing specifics, consider refining the values for the following (e.g., ${auditReport.itemSpecificsRecommendations.corrections.map(c => `${c.label} from "${c.current_value}" to "${c.recommended_value}"`).join('; ')}). `;
-
 
   // 4. Photos
   body += `4. Photos:\n\n`;
