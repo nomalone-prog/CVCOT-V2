@@ -12,16 +12,22 @@ interface AuditDashboardProps {
 export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, auditReport }) => {
   const [copyStatusTitle, setCopyStatusTitle] = useState<'idle' | 'copied'>('idle');
   const [copyStatusEmail, setCopyStatusEmail] = useState<'idle' | 'copied'>('idle');
+  // NEW: State for Hive Copy Button
+  const [copyStatusHive, setCopyStatusHive] = useState<'idle' | 'copied'>('idle');
 
-  const handleCopyToClipboard = useCallback(async (text: string, type: 'title' | 'email') => {
+  const handleCopyToClipboard = useCallback(async (text: string, type: 'title' | 'email' | 'hive') => {
     try {
       await navigator.clipboard.writeText(text);
       if (type === 'title') {
         setCopyStatusTitle('copied');
         setTimeout(() => setCopyStatusTitle('idle'), 2000);
-      } else {
+      } else if (type === 'email') {
         setCopyStatusEmail('copied');
         setTimeout(() => setCopyStatusEmail('idle'), 2000);
+      } else {
+        // Handle Hive copy status
+        setCopyStatusHive('copied');
+        setTimeout(() => setCopyStatusHive('idle'), 2000);
       }
     } catch (err) {
       console.error('Failed to copy text: ', err);
@@ -54,7 +60,7 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
     return { __html: htmlString };
   };
 
-  // --- NEW GRADING LOGIC (Replaces Raw Number) ---
+  // --- GRADING LOGIC ---
   let scoreLabel = '';
   let scoreColorClass = '';
   let ringColor = '';
@@ -63,20 +69,23 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
 
   if (score > 75) {
       scoreLabel = 'Excellent';
-      scoreColorClass = 'text-green-status'; // Bright Green text
-      ringColor = '#10B981'; // Tailwind Emerald-500
+      scoreColorClass = 'text-green-status'; 
+      ringColor = '#10B981'; 
   } else if (score > 50) {
       scoreLabel = 'Good';
-      scoreColorClass = 'text-yellow-400'; // Yellow/Orange text
-      ringColor = '#FBBF24'; // Tailwind Amber-400
+      scoreColorClass = 'text-yellow-400'; 
+      ringColor = '#FBBF24'; 
   } else {
       scoreLabel = 'Needs Work';
-      scoreColorClass = 'text-red-status'; // Red text
-      ringColor = '#EF4444'; // Tailwind Red-500
+      scoreColorClass = 'text-red-status'; 
+      ringColor = '#EF4444'; 
   }
 
   const { subject: emailSubject, body: emailBody } = generateEmailContent(parsedData, auditReport);
   const fullEmailContent = `Subject: ${emailSubject}\n\n${emailBody}`;
+
+  // NEW: Hive Text Template
+  const hiveText = `emailed seller regarding ${parsedData.itemId} Advised listing needs better optimisation and gave optimisation details including title, item specifics, description and photos.`;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 md:p-8 rounded-xl bg-secondary-bg shadow-2xl">
@@ -102,14 +111,15 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
         {/* Overall Score / Health Grade */}
         <div className="p-4 bg-primary-bg rounded-xl shadow-inner flex flex-col items-center justify-center">
           <h2 className="text-2xl font-bold text-text-light mb-4">Listing Health</h2>
+          {/* Ring Radius 80, Box w-40 h-40 */}
           <div className="relative flex items-center justify-center w-40 h-40">
             <CircularProgressRing
               percentage={score}
-              radius={70}
+              radius={80} 
               strokeWidth={8}
-              color={ringColor} // Dynamic Color
+              color={ringColor} 
             />
-            {/* Replaced Number with Text Label */}
+            {/* Text Label */}
             <span className={`absolute text-xl font-extrabold text-center px-2 leading-tight ${scoreColorClass}`}>
               {scoreLabel}
             </span>
@@ -331,6 +341,27 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
           {emailBody}
         </div>
       </div>
+
+      {/* NEW SECTION: Copy for Hive */}
+      <div className="lg:col-span-3 p-6 bg-primary-bg rounded-xl shadow-inner flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-3xl font-bold text-text-light">Copy for Hive</h2>
+          <button
+            onClick={() => handleCopyToClipboard(hiveText, 'hive')}
+            className="ml-4 px-4 py-2 bg-accent text-white font-semibold rounded-full hover:bg-accent-dark transition-colors shadow-lg flex items-center"
+          >
+            {copyStatusHive === 'copied' ? (
+              <>Copied!</>
+            ) : (
+              <>Copy Text</>
+            )}
+          </button>
+        </div>
+        <div className="flex-grow p-6 bg-gray-800 rounded-lg text-text-light whitespace-pre-wrap font-mono text-sm leading-relaxed">
+          {hiveText}
+        </div>
+      </div>
+
     </div>
   );
 };
