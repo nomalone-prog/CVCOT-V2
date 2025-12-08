@@ -6,11 +6,11 @@ import { GEMINI_MODEL, SYSTEM_INSTRUCTION, AUDIT_REPORT_SCHEMA } from '../consta
 // Utility to create a new GoogleGenAI instance for each API call
 // This ensures that the instance picks up the latest API key if it changes via window.aistudio.openSelectKey()
 const getGeminiClient = () => {
-  // Use import.meta.env for Vite
+  // CHANGED: Use import.meta.env.VITE_API_KEY for Vite/Vercel compatibility
   const apiKey = import.meta.env.VITE_API_KEY; 
 
   if (!apiKey) {
-    throw new Error("API Key not found");
+    throw new Error("API Key not found. Please check Vercel environment variables.");
   }
   return new GoogleGenAI({ apiKey: apiKey });
 };
