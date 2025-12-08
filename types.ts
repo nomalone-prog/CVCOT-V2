@@ -1,25 +1,4 @@
-
-export interface ParsedListingData {
-  title: string;
-  price: string;
-  descriptionHtml: string; // The raw HTML content of the description, as Gemini can process HTML
-  itemSpecifics: { label: string; value: string }[];
-  itemNumber: string; // Add itemNumber field
-}
-
-export interface EbayAdvertising {
-  recommendedCampaignType: string;
-  campaignInfo: string; // Combines smart and manual campaign info
-  exactMatchKeywords: string[];
-  phraseMatchKeywords: string[];
-  broadMatchKeywords: string[];
-  setupInstructions: string[];
-}
-
-export interface ItemSpecificsRecommendations {
-  additions: string[]; // List of specific labels for missing item specifics
-  corrections: { label: string; current_value: string; recommended_value: string; }[]; // List of existing specifics needing correction
-}
+// inside types.ts
 
 export interface AuditReport {
   overallScore: number;
@@ -27,16 +6,31 @@ export interface AuditReport {
     currentTitle: string;
     recommendedTitle: string;
     score: number;
+    reasoning: string; // NEW: The AI will now return this
   };
-  itemSpecificsRecommendations: ItemSpecificsRecommendations; // New structured item specifics
-  photoAdvice: string; // Category-specific advice
-  descriptionRewrite: string; // Rewritten description
+  itemSpecificsRecommendations: {
+    additions: string[];
+    corrections: {
+      label: string;
+      current_value: string;
+      recommended_value: string;
+    }[];
+    reasoning: string; // NEW: The AI will now return this
+  };
+  photoAdvice: string;
+  descriptionRewrite: string;
+  descriptionChangeReasoning: string; // NEW: The AI will now return this
   logistics: {
     postagePolicy: string;
     returnPolicy: string;
     score: number;
   };
-  ebayAdvertising: EbayAdvertising;
+  ebayAdvertising: {
+    recommendedCampaignType: string;
+    campaignInfo: string;
+    exactMatchKeywords: string[];
+    phraseMatchKeywords: string[];
+    broadMatchKeywords: string[];
+    setupInstructions: string[];
+  };
 }
-
-export type Status = 'idle' | 'loading' | 'success' | 'error';
