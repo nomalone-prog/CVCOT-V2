@@ -34,9 +34,8 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
       const csvContent = generateCsvContent(parsedData, auditReport);
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
-      if (link.download !== undefined) { // Feature detection
+      if (link.download !== undefined) {
         const url = URL.createObjectURL(blob);
-        // Fix: Use a sanitized version of the title for the filename, as `itemId` does not exist on `ParsedListingData`.
         const sanitizedTitle = parsedData.title.replace(/[^a-zA-Z0-9_\-.]/g, '_').substring(0, 50) || 'report';
         link.setAttribute('href', url);
         link.setAttribute('download', `cvc_listing_audit_${sanitizedTitle}.csv`);
@@ -63,9 +62,25 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
   const { subject: emailSubject, body: emailBody } = generateEmailContent(parsedData, auditReport);
   const fullEmailContent = `Subject: ${emailSubject}\n\n${emailBody}`;
 
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 md:p-8 rounded-xl bg-secondary-bg shadow-2xl">
+      
+      {/* NEW: General Info Header Box */}
+      <div className="lg:col-span-3 p-4 bg-gray-800 rounded-xl border border-gray-700 flex flex-wrap justify-between items-center">
+         <div>
+            <h3 className="text-gray-400 text-sm uppercase tracking-wider font-bold">Category</h3>
+            <p className="text-white text-lg font-medium">{parsedData.category}</p>
+         </div>
+         <div className="mt-2 sm:mt-0">
+            <h3 className="text-gray-400 text-sm uppercase tracking-wider font-bold text-right sm:text-left">Item ID</h3>
+            <p className="text-white text-lg font-mono">{parsedData.itemId}</p>
+         </div>
+         <div className="mt-2 sm:mt-0">
+            <h3 className="text-gray-400 text-sm uppercase tracking-wider font-bold text-right sm:text-left">Current Price</h3>
+            <p className="text-green-status text-lg font-bold">{parsedData.price}</p>
+         </div>
+      </div>
+
       {/* Container for Overall Score and Download CSV */}
       <div className="lg:col-span-1 flex flex-col gap-6">
         {/* Overall Score */}
@@ -116,22 +131,22 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
                 className="ml-2 px-3 py-1 bg-accent text-white text-sm rounded hover:bg-accent-dark transition-colors flex items-center"
               >
                 {copyStatusTitle === 'copied' ? (
-                  <>
-                    <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                    Copied!
-                  </>
+                  <>Copied!</>
                 ) : (
-                  <>
-                    <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-2M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-                    Copy
-                  </>
+                  <>Copy</>
                 )}
               </button>
             </p>
             <p className="text-green-status font-bold text-xl p-2 bg-gray-800 rounded">{auditReport.titleStrategy.recommendedTitle}</p>
-            <p className="mt-2 text-text-dark text-base leading-relaxed">
-              This optimized title, '{auditReport.titleStrategy.recommendedTitle}', improves your eBay.co.uk SEO by strategically enhancing keyword prominence compared to your current title, '{parsedData.title}'. It prioritizes distinguishing product attributes and core features earlier in the title, which is crucial for capturing specific buyer searches. This approach maximizes the use of available character limits and aligns with eBay's search algorithms to significantly boost your listing's visibility and click-through rates by directly targeting what buyers are actively seeking.
-            </p>
+            
+            {/* NEW: Dynamic Reasoning Display */}
+            <div className="mt-4 p-3 bg-gray-800/50 border-l-4 border-accent rounded-r">
+              <p className="text-text-light text-sm italic">
+                <span className="font-bold text-accent not-italic">AI Reasoning: </span>
+                {auditReport.titleStrategy.reasoning}
+              </p>
+            </div>
+
           </div>
         </div>
       </div>
@@ -195,6 +210,14 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
       {/* Item Specifics */}
       <div className="lg:col-span-1 p-6 bg-primary-bg rounded-xl shadow-inner">
         <h2 className="text-3xl font-bold text-text-light mb-4">Item Specifics</h2>
+        
+        {/* NEW: Reasoning for Item Specifics */}
+        <div className="mb-4 p-3 bg-gray-800/50 border-l-4 border-accent rounded-r">
+             <p className="text-text-light text-sm italic">
+               {auditReport.itemSpecificsRecommendations.reasoning}
+             </p>
+        </div>
+
         <div className="space-y-6">
           {/* Recommended Additions */}
           <div>
@@ -244,6 +267,15 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
       {/* Description Rewrite */}
       <div className="lg:col-span-3 p-6 bg-primary-bg rounded-xl shadow-inner">
         <h2 className="text-3xl font-bold text-text-light mb-4">Description Rewrite</h2>
+        
+         {/* NEW: Reasoning for Description */}
+        <div className="mb-4 p-3 bg-gray-800/50 border-l-4 border-accent rounded-r">
+             <p className="text-text-light text-sm italic">
+               <span className="font-bold text-accent not-italic">Strategy: </span>
+               {auditReport.descriptionChangeReasoning}
+             </p>
+        </div>
+
         <div className="prose prose-invert max-w-none text-text-light text-lg leading-relaxed">
           <div dangerouslySetInnerHTML={renderRichText(auditReport.descriptionRewrite)} />
         </div>
@@ -278,15 +310,9 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
             className="ml-4 px-4 py-2 bg-accent text-white font-semibold rounded-full hover:bg-accent-dark transition-colors shadow-lg flex items-center"
           >
             {copyStatusEmail === 'copied' ? (
-              <>
-                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                Copied!
-              </>
+              <>Copied!</>
             ) : (
-              <>
-                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-2M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-                Copy Email
-              </>
+              <>Copy Email</>
             )}
           </button>
         </div>
