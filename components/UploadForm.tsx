@@ -105,7 +105,7 @@ export const UploadForm: React.FC<UploadFormProps> = ({ onFileUpload }) => {
       </button>
       {fileName && <p className="mt-4 text-text-dark text-sm">Selected: <span className="text-accent">{fileName}</span></p>}
       <p className="mt-6 text-sm text-text-dark max-w-xs">
-        *How to save your eBay listing: Go to your live eBay listing page, then press Ctrl+S (Windows) or Cmd+S (Mac) and save as 'Webpage, Complete'.
+        *How to save your eBay listing: Go to your live eBay listing page, then press Ctrl+S (Windows) or Cmd+S (Mac) and save as 'Webpage, HTML'.
       </p>
     </div>
   );
