@@ -2,8 +2,6 @@ import { ParsedListingData, AuditReport } from '../types';
 
 /**
  * Extracts clean, readable text from an HTML string.
- * Specifically designed to turn HTML lists (<ul><li>) into plain text bullet points
- * and preserve paragraph breaks so the email doesn't look like a "wall of text".
  */
 function extractTextContent(htmlString: string): string {
   if (!htmlString) return '';
@@ -26,7 +24,6 @@ function extractTextContent(htmlString: string): string {
 
 /**
  * Generates the email content for the seller based on audit data.
- * NOW UPDATED: Uses dynamic AI reasoning instead of generic boilerplate.
  */
 export function generateEmailContent(parsedData: ParsedListingData, auditReport: AuditReport): { subject: string; body: string } {
   const fullTitle = parsedData.title;
@@ -37,7 +34,8 @@ export function generateEmailContent(parsedData: ParsedListingData, auditReport:
     itemNameForEmail = titleParts[0]?.trim() || fullTitle;
   }
 
-  const itemNumberString = parsedData.itemNumber !== 'N/A' ? ` (Item Number: ${parsedData.itemNumber})` : '';
+  // FIX: Changed 'itemNumber' to 'itemId' to match your types
+  const itemNumberString = parsedData.itemId && parsedData.itemId !== 'N/A' ? ` (Item Number: ${parsedData.itemId})` : '';
 
   const subject = `Boosting your listing: Ideas for ${itemNameForEmail}`;
 
@@ -48,14 +46,12 @@ export function generateEmailContent(parsedData: ParsedListingData, auditReport:
   // 1. Title Optimization (Dynamic Reasoning)
   body += `1. Title:\n\n`;
   body += `Your current title, "${parsedData.title}" is good, but a more effective approach would be: "${auditReport.titleStrategy.recommendedTitle}".\n\n`;
-  // NEW: Uses specific AI reasoning
   body += `Reasoning: ${auditReport.titleStrategy.reasoning}\n\n`;
 
   // 2. Description Update (Dynamic Reasoning)
   body += `2. Description Update:\n\n`;
   const rewrittenDescriptionText = extractTextContent(auditReport.descriptionRewrite);
   body += `${rewrittenDescriptionText}\n\n`;
-  // NEW: Uses specific AI reasoning
   body += `Why this works: ${auditReport.descriptionChangeReasoning}\n\n`;
 
   // 3. Item Specifics (Dynamic Reasoning)
@@ -66,7 +62,6 @@ export function generateEmailContent(parsedData: ParsedListingData, auditReport:
       body += `- ${spec}\n`;
     });
     body += `\n`;
-    // NEW: Uses specific AI reasoning
     body += `Impact: ${auditReport.itemSpecificsRecommendations.reasoning}\n\n`;
   } else {
     body += `No specific additions to item specifics are recommended at this time, indicating a strong foundation in this area.\n\n`;
