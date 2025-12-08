@@ -87,55 +87,19 @@ export const AuditDashboard: React.FC<AuditDashboardProps> = ({ parsedData, audi
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 md:p-8 rounded-xl bg-secondary-bg shadow-2xl">
       
-      {/* General Info Header Box */}
-      <div className="lg:col-span-3 p-4 bg-gray-800 rounded-xl border border-gray-700 grid grid-cols-2 md:grid-cols-5 gap-4">
-         {/* Column 1: Item ID */}
+      {/* General Info Header Box (CLEANED) */}
+      <div className="lg:col-span-3 p-4 bg-gray-800 rounded-xl border border-gray-700 flex flex-wrap justify-between items-center">
          <div>
-            <h3 className="text-gray-400 text-xs uppercase tracking-wider font-bold">Item ID</h3>
-            <p className="text-white text-base font-mono truncate" title={parsedData.itemId}>{parsedData.itemId}</p>
+            <h3 className="text-gray-400 text-sm uppercase tracking-wider font-bold">Category</h3>
+            <p className="text-white text-lg font-medium">{parsedData.category}</p>
          </div>
-         
-         {/* Column 2: Seller */}
-         <div>
-            <h3 className="text-gray-400 text-xs uppercase tracking-wider font-bold">Seller</h3>
-            <p className="text-white text-base font-medium truncate">{parsedData.sellerName}</p>
-            <p className="text-text-dark text-xs">{parsedData.feedbackScore} Feedback</p>
+         <div className="mt-2 sm:mt-0">
+            <h3 className="text-gray-400 text-sm uppercase tracking-wider font-bold text-right sm:text-left">Item ID</h3>
+            <p className="text-white text-lg font-mono">{parsedData.itemId}</p>
          </div>
-
-         {/* Column 3: Category */}
-         <div className="md:col-span-1">
-            <h3 className="text-gray-400 text-xs uppercase tracking-wider font-bold">Category</h3>
-            <p className="text-white text-base font-medium truncate" title={parsedData.category}>
-               {parsedData.category.split('>').pop()?.trim() || parsedData.category}
-            </p>
-         </div>
-
-         {/* Column 4: Condition & Price */}
-         <div>
-            <h3 className="text-gray-400 text-xs uppercase tracking-wider font-bold">Details</h3>
-            <p className="text-white text-base">{parsedData.condition}</p>
-            <p className="text-green-status font-bold">{parsedData.price}</p>
-         </div>
-
-         {/* Column 5: Image Health (Smart Variation Logic) */}
-         <div>
-             <h3 className="text-gray-400 text-xs uppercase tracking-wider font-bold">Photos</h3>
-             {parsedData.isVariation ? (
-                 <div>
-                    <span className="text-white text-lg font-bold">{parsedData.imageCount}+</span>
-                    <span className="block text-[10px] text-accent font-bold uppercase tracking-wide">VARIATION LISTING</span>
-                 </div>
-             ) : (
-                 <div>
-                     <div className="flex items-center">
-                         <span className={`text-xl font-bold ${parsedData.imageCount >= 6 ? 'text-green-status' : 'text-red-status'}`}>
-                            {parsedData.imageCount}
-                         </span>
-                         <span className="text-gray-500 text-xs ml-1">/ 24</span>
-                     </div>
-                     {parsedData.imageCount < 6 && <span className="text-red-status text-[10px] font-bold">LOW COUNT</span>}
-                 </div>
-             )}
+         <div className="mt-2 sm:mt-0">
+            <h3 className="text-gray-400 text-sm uppercase tracking-wider font-bold text-right sm:text-left">Current Price</h3>
+            <p className="text-green-status text-lg font-bold">{parsedData.price}</p>
          </div>
       </div>
 
